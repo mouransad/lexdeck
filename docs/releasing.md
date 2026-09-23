@@ -46,6 +46,9 @@ Update `uv.lock` with `uv lock` after changing package versions. The release
 script rejects a tag that differs from the package version, such as `v0.2.0`
 for version `0.1.0`.
 
+Write `docs/releases/vVERSION.md` with concise, user-facing release notes.
+The publish job uses this file for the release description.
+
 Before tagging:
 
 ```sh
@@ -64,14 +67,13 @@ matching tag:
 
 ```sh
 git tag -a v0.1.0 -m "Lexdeck v0.1.0"
-git push origin main
 git push origin v0.1.0
 ```
 
 The tag starts the release workflow. It validates versions, runs `make check`,
 builds and smoke-tests each target, creates provenance attestations, and uploads
 the assets. Only after every build succeeds does the publish job create a draft
-release with all assets and `SHA256SUMS.txt`, then publish it with generated
+release with all assets and `SHA256SUMS.txt`, then publish it with the checked-in
 release notes. Check the resulting release page and download at least one asset.
 Do not move an existing release tag to replace a published binary; issue a new
 version instead.
