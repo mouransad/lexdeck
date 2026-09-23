@@ -139,7 +139,7 @@ wheels = [
 
 [[package]]
 name = "lexdeck-cli"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "apps/cli" }
 dependencies = [
     { name = "fpdf2" },
@@ -164,7 +164,7 @@ requires-dist = [
 
 [[package]]
 name = "lexdeck-core"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "platformdirs" },
@@ -175,7 +175,7 @@ requires-dist = [{ name = "platformdirs", specifier = ">=4.3,<5" }]
 
 [[package]]
 name = "lexdeck-workspace"
-version = "0.1.0"
+version = "0.1.1"
 source = { virtual = "." }
 
 [package.dev-dependencies]

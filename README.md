@@ -34,9 +34,9 @@ download the archive matching your system:
 | macOS Intel | `lexdeck-vVERSION-macos-x86_64.tar.gz` |
 | macOS Apple Silicon | `lexdeck-vVERSION-macos-arm64.tar.gz` |
 
-`VERSION` is the release tag, such as `0.1.0` in `lexdeck-v0.1.0-linux-x86_64.tar.gz`.
+`VERSION` is the release tag, such as `0.1.1` in `lexdeck-v0.1.1-linux-x86_64.tar.gz`.
 Each archive contains the `lexdeck` executable (or `lexdeck.exe`), the MIT license,
-and the bundled font license. Download `SHA256SUMS.txt` from the same release if you
+and third-party notices and license texts. Download `SHA256SUMS.txt` from the same release if you
 want to verify the archive before opening it. On Linux or macOS, run
 `sha256sum -c SHA256SUMS.txt --ignore-missing` in the download folder. On
 Windows, compare `Get-FileHash .\ARCHIVE.zip -Algorithm SHA256` with the

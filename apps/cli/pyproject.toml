@@ -1,6 +1,6 @@
 [project]
 name = "lexdeck-cli"
-version = "0.1.0"
+version = "0.1.1"
 description = "A keyboard-first CLI and TUI for learning with flashcards"
 requires-python = ">=3.11"
 license = "MIT"

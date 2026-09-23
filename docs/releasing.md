@@ -13,6 +13,9 @@ Ubuntu 22.04 to avoid depending on a newer glibc than necessary. The first
 supported targets are Linux x86-64/ARM64, Windows x86-64, and macOS Intel/Apple
 Silicon. These are terminal applications, not graphical installers.
 
+Each archive also carries license texts for the bundled Python runtime,
+PyInstaller bootloader, fonts, and application dependencies.
+
 The source workspace still builds wheels and sdists for development validation.
 The CLI wheel depends on the separate `lexdeck-core` distribution; publishing
 just the CLI wheel on GitHub would not provide a simple end-user installation.
@@ -44,7 +47,7 @@ Keep these three versions synchronized: `apps/cli/pyproject.toml`,
 `packages/core/pyproject.toml`, and `apps/cli/src/lexdeck_cli/__init__.py`.
 Update `uv.lock` with `uv lock` after changing package versions. The release
 script rejects a tag that differs from the package version, such as `v0.2.0`
-for version `0.1.0`.
+for version `0.1.1`.
 
 Write `docs/releases/vVERSION.md` with concise, user-facing release notes.
 The publish job uses this file for the release description.
@@ -53,7 +56,7 @@ Before tagging:
 
 ```sh
 make check
-uv run --group release python scripts/build_release.py --tag v0.1.0
+uv run --group release python scripts/build_release.py --tag v0.1.1
 ```
 
 The local build smoke-tests a standalone executable using a disposable database
@@ -66,8 +69,8 @@ Commit the version change, push `main`, wait for CI, then create and push the
 matching tag:
 
 ```sh
-git tag -a v0.1.0 -m "Lexdeck v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "Lexdeck v0.1.1"
+git push origin v0.1.1
 ```
 
 The tag starts the release workflow. It validates versions, runs `make check`,

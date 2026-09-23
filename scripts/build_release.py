@@ -11,12 +11,66 @@ import tarfile
 import tempfile
 import tomllib
 import zipfile
+from importlib import metadata
 from pathlib import Path
 
 from lexdeck_cli import __version__
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASE_DIR = ROOT / "dist" / "release"
+RUNTIME_PACKAGES = (
+    "annotated-doc",
+    "defusedxml",
+    "fonttools",
+    "fpdf2",
+    "linkify-it-py",
+    "markdown-it-py",
+    "mdit-py-plugins",
+    "mdurl",
+    "pillow",
+    "platformdirs",
+    "pygments",
+    "rich",
+    "shellingham",
+    "textual",
+    "typer",
+    "typing-extensions",
+    "uharfbuzz",
+    "xlsxwriter",
+    "pyinstaller",  # Its bootloader is part of the standalone executable.
+)
+
+
+def third_party_notices() -> tuple[dict[str, Path], str]:
+    """Gather the license texts shipped by every bundled runtime package."""
+    licenses: dict[str, Path] = {}
+    lines = [
+        "Lexdeck standalone distribution — third-party notices",
+        "",
+        "License texts for bundled components are in the licenses/ directory.",
+        "Python 3.11: PSF License (PYTHON-LICENSE.txt)",
+        "DejaVu fonts: Bitstream Vera license (DEJAVU-LICENSE.txt)",
+        "",
+    ]
+    for name in RUNTIME_PACKAGES:
+        distribution = metadata.distribution(name)
+        license_name = (
+            distribution.metadata.get("License-Expression")
+            or distribution.metadata.get("License")
+            or "See included license text"
+        )
+        lines.append(f"{name} {distribution.version}: {license_name.strip()}")
+        found = False
+        for file in distribution.files or ():
+            if not any(word in file.name.lower() for word in ("license", "copying", "notice")):
+                continue
+            source = Path(distribution.locate_file(file))
+            if source.is_file():
+                licenses[f"licenses/{name}/{file.as_posix()}"] = source
+                found = True
+        if not found:
+            raise SystemExit(f"No license text found for {name}")
+    return licenses, "\n".join(lines) + "\n"
 
 
 def release_version(tag: str) -> str:
@@ -96,11 +150,17 @@ def build(tag: str) -> Path:
             )
             if '"content": "release smoke test"' not in listing.stdout:
                 raise SystemExit("Packaged CLI did not return the smoke-test card")
+        licenses, notices = third_party_notices()
+        notice_path = work / "THIRD_PARTY_NOTICES.txt"
+        notice_path.write_text(notices, encoding="utf-8")
         base = f"lexdeck-{tag}-{system}-{architecture}"
         files = {
             binary_name: binary,
             "LICENSE": ROOT / "LICENSE",
             "DEJAVU-LICENSE.txt": ROOT / "apps/cli/src/lexdeck_cli/assets/DEJAVU-LICENSE.txt",
+            "PYTHON-LICENSE.txt": ROOT / "apps/cli/src/lexdeck_cli/assets/PYTHON-LICENSE.txt",
+            "THIRD_PARTY_NOTICES.txt": notice_path,
+            **licenses,
         }
         if system == "windows":
             archive = RELEASE_DIR / f"{base}.zip"
@@ -118,7 +178,7 @@ def build(tag: str) -> Path:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tag", required=True, help="Release tag, for example v0.1.0")
+    parser.add_argument("--tag", required=True, help="Release tag, for example v0.1.1")
     parser.add_argument(
         "--check-version", action="store_true", help="Validate tag and versions only"
     )
