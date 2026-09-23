@@ -1,0 +1,16 @@
+[project]
+name = "lexdeck-core"
+version = "0.1.0"
+description = "Framework-independent domain and persistence layer for Lexdeck"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+  "platformdirs>=4.3,<5",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "lexdeck_core"

@@ -1,0 +1,25 @@
+[project]
+name = "lexdeck-cli"
+version = "0.1.0"
+description = "A keyboard-first CLI and TUI for learning with flashcards"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+  "fpdf2>=2.8.4,<3",
+  "lexdeck-core",
+  "rich>=13.9,<15",
+  "textual>=3.0,<8",
+  "typer>=0.15,<1",
+  "uharfbuzz>=0.51,<1",
+  "xlsxwriter>=3.2,<4",
+]
+
+[project.scripts]
+lexdeck = "lexdeck_cli.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "lexdeck_cli"

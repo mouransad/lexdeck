@@ -1,0 +1,44 @@
+[project]
+name = "lexdeck-workspace"
+version = "0.1.0"
+description = "Workspace for Lexdeck applications and shared packages"
+requires-python = ">=3.11"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]
+
+[tool.uv.sources]
+lexdeck-core = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.25,<1",
+  "ruff>=0.11,<1",
+]
+release = [
+    "pyinstaller>=6.16,<7",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+testpaths = ["apps/cli/tests", "packages/core/tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["lexdeck_core", "lexdeck_cli"]
+mypy_path = ["packages/core/src", "apps/cli/src"]
+
