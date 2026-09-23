@@ -45,17 +45,18 @@ def export_cards_fixture() -> list[Card]:
 
 
 def test_plain_text_export_is_structured_utf8(tmp_path, export_cards_fixture: list[Card]) -> None:
+    generated_at = datetime(2026, 9, 21, 14, 0, tzinfo=UTC)
     output = export_cards(
         export_cards_fixture,
         tmp_path / "cards",
         ExportFormat.TEXT,
-        generated_at=datetime(2026, 9, 21, 14, 0, tzinfo=UTC),
+        generated_at=generated_at,
     )
 
     assert output == tmp_path / "cards.txt"
     content = output.read_text(encoding="utf-8")
     assert "LEXDECK - SELECTED FLASHCARDS" in content
-    assert "3 cards - Exported 2026-09-21 17:30" in content
+    assert f"3 cards - Exported {generated_at.astimezone():%Y-%m-%d %H:%M}" in content
     assert "2. CONTENT\nmeticulous\n\nMEANING\nدقیق و موشکاف" in content
     assert "3. CONTENT\n=not a formula\n\nMEANING\nNot provided." in content
 

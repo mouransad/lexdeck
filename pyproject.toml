@@ -41,4 +41,3 @@ python_version = "3.11"
 strict = true
 packages = ["lexdeck_core", "lexdeck_cli"]
 mypy_path = ["packages/core/src", "apps/cli/src"]
-
