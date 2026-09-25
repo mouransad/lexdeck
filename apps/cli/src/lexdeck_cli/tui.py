@@ -12,6 +12,7 @@ from typing import ClassVar, cast
 from lexdeck_core import Card, LexdeckService, StudyOrder
 from lexdeck_core.repository import CardNotFoundError
 from lexdeck_core.service import ValidationError
+from rich.text import Text
 from textual import events, on, work
 from textual.app import App, ComposeResult, SystemCommand
 from textual.binding import Binding
@@ -218,6 +219,7 @@ class AddScreen(LexdeckScreen):
 class LibraryScreen(LexdeckScreen):
     BINDINGS: ClassVar[list[BindingSpec]] = [
         Binding("enter,l", "open_or_toggle", "Open / select", show=False),
+        Binding("shift+enter", "select_range", "Select range", show=False),
         Binding("space", "toggle_selected", "Select", show=False),
         Binding("e,i", "edit_selected", "Edit"),
         Binding("delete", "delete_selected", "Archive"),
@@ -245,6 +247,7 @@ class LibraryScreen(LexdeckScreen):
         self.cards: dict[str, Card] = {}
         self.selected_cards: dict[str, Card] = {}
         self.selection_mode = False
+        self._selection_anchor: str | None = None
         self._pending_vim_key: str | None = None
         self._pending_vim_at = 0.0
 
@@ -336,13 +339,22 @@ class LibraryScreen(LexdeckScreen):
     def row_selected(self, _: DataTable.RowSelected) -> None:
         self.action_open_or_toggle()
 
+    def on_key(self, event: events.Key) -> None:
+        if (
+            self.selection_mode
+            and event.key in {"L", "shift+l"}
+            and self.query_one("#card-table", DataTable).has_focus
+        ):
+            self.action_select_range()
+            event.stop()
+
     def _show_detail(self, card: Card) -> None:
         selection_status = ""
         if self.selection_mode:
             selection_status = (
-                "[green][x] SELECTED[/green]\n\n"
+                "[green]☑ SELECTED[/green]\n\n"
                 if card.id in self.selected_cards
-                else "[dim][ ] NOT SELECTED[/dim]\n\n"
+                else "[dim]☐ NOT SELECTED[/dim]\n\n"
             )
         self.query_one("#card-detail", Static).update(
             f"{selection_status}[dim]{card.id[:8]}[/dim]\n\n"
@@ -371,6 +383,9 @@ class LibraryScreen(LexdeckScreen):
             return self.selected_card() is not None
         if action == "toggle_selected":
             return self.selection_mode and self.selected_card() is not None
+        if action == "select_range":
+            table = self.query_one("#card-table", DataTable)
+            return self.selection_mode and table.has_focus and self.selected_card() is not None
         if action in {"export_selected", "print_selected"}:
             return self.selection_mode and bool(self.selected_cards)
         if action == "select_all":
@@ -448,9 +463,11 @@ class LibraryScreen(LexdeckScreen):
             self._toggle_current_card()
 
     def action_enter_selection(self) -> None:
-        if self.selected_card() is None:
+        card = self.selected_card()
+        if card is None:
             return
         self.selection_mode = True
+        self._selection_anchor = card.id
         self._pending_vim_key = None
         self._refresh_table_markers()
         self._refresh_selection_ui()
@@ -472,6 +489,8 @@ class LibraryScreen(LexdeckScreen):
         if not self.selection_mode:
             return
         self.selected_cards.clear()
+        current_card = self.selected_card()
+        self._selection_anchor = current_card.id if current_card else None
         self._refresh_table_markers()
         self._refresh_selection_ui()
         if current_card := self.selected_card():
@@ -532,14 +551,34 @@ class LibraryScreen(LexdeckScreen):
             del self.selected_cards[card.id]
         else:
             self.selected_cards[card.id] = card
+        self._selection_anchor = card.id
         self._refresh_table_markers()
         self._refresh_selection_ui()
         self._show_detail(card)
 
-    def _selection_marker(self, card_id: str) -> str:
+    def action_select_range(self) -> None:
+        table = self.query_one("#card-table", DataTable)
+        if not self.selection_mode or not table.has_focus or (card := self.selected_card()) is None:
+            return
+        visible_ids = list(self.cards)
+        anchor_id = self._selection_anchor
+        if anchor_id not in self.cards:
+            anchor_id = card.id
+            self._selection_anchor = anchor_id
+        anchor_index = visible_ids.index(anchor_id)
+        current_index = visible_ids.index(card.id)
+        for card_id in visible_ids[
+            min(anchor_index, current_index) : max(anchor_index, current_index) + 1
+        ]:
+            self.selected_cards[card_id] = self.cards[card_id]
+        self._refresh_table_markers()
+        self._refresh_selection_ui()
+        self._show_detail(card)
+
+    def _selection_marker(self, card_id: str) -> Text:
         if not self.selection_mode:
-            return ""
-        return "[x]" if card_id in self.selected_cards else "[ ]"
+            return Text("")
+        return Text("[x]" if card_id in self.selected_cards else "[ ]")
 
     def _refresh_table_markers(self) -> None:
         table = self.query_one("#card-table", DataTable)
@@ -561,7 +600,7 @@ class LibraryScreen(LexdeckScreen):
         selected_count = len(self.selected_cards)
         if self.selection_mode:
             self.query_one("#library-subtitle", Label).update(
-                "Selection mode: J/K move · L toggle · Ctrl+E export · P print · "
+                "Selection mode: J/K move · L toggle · Shift+L range · Ctrl+E export · P print · "
                 "Delete archive · Esc finish."
             )
             result = (
@@ -589,6 +628,7 @@ class LibraryScreen(LexdeckScreen):
     def _leave_selection_mode(self) -> None:
         self.selection_mode = False
         self.selected_cards.clear()
+        self._selection_anchor = None
         self._refresh_table_markers()
         self._refresh_selection_ui()
         if card := self.selected_card():
@@ -1337,6 +1377,7 @@ class HelpModal(ModalScreen[None]):
                 "[dim]LIBRARY · SELECTION MODE[/dim]\n"
                 "[bold]j / k[/bold] move without selecting · "
                 "[bold]l / Enter / Space[/bold] toggle card\n"
+                "[bold]Shift+L / Shift+Enter[/bold] select from anchor through highlighted card\n"
                 "[bold]Ctrl+A[/bold] select visible · [bold]c[/bold] clear · "
                 "[bold]Ctrl+E[/bold] export · [bold]p[/bold] print\n"
                 "[bold]dd / Delete[/bold] archive selection · [bold]Esc[/bold] finish\n\n"

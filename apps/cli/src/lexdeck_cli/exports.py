@@ -8,6 +8,7 @@ import unicodedata
 from collections.abc import Callable, Sequence
 from datetime import datetime
 from enum import StrEnum
+from math import floor
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -121,10 +122,7 @@ def export_cards(
 
 class _LexdeckPDF(FPDF):
     def footer(self) -> None:
-        self.set_y(-13)
-        self.set_draw_color(219, 227, 239)
-        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
-        self.ln(3)
+        self.set_y(-9)
         self.set_font("Lexdeck", "", 7)
         self.set_text_color(100, 116, 139)
         self.cell(0, 4, f"Page {self.page_no()}", align="R")
@@ -136,18 +134,23 @@ def _write_pdf(cards: Sequence[Card], path: Path, _generated_at: datetime) -> No
     pdf.set_title("Lexdeck selected flashcards")
     pdf.set_author("Lexdeck")
     pdf.set_creator("Lexdeck")
-    pdf.set_margins(18, 24, 18)
-    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.set_margins(12, 12, 12)
+    pdf.set_auto_page_break(auto=True, margin=12)
     pdf.add_font("Lexdeck", fname=regular_font)
     pdf.add_font("Lexdeck", style="B", fname=bold_font)
     pdf.set_text_shaping(True)
     pdf.add_page()
 
-    pdf.set_font("Lexdeck", "B", 13)
+    pdf.set_font("Lexdeck", "B", 10)
     pdf.set_text_color(15, 23, 42)
     count_label = f"{len(cards)} card{'s' if len(cards) != 1 else ''}"
-    pdf.cell(0, 8, count_label, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.ln(7)
+    pdf.cell(0, 6, count_label, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_font("Lexdeck", "B", 7)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(70, 4, "Content")
+    pdf.set_x(pdf.l_margin + 76)
+    pdf.cell(0, 4, "Meaning", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(2)
 
     for card in cards:
         _write_pdf_card(pdf, card)
@@ -156,73 +159,70 @@ def _write_pdf(cards: Sequence[Card], path: Path, _generated_at: datetime) -> No
 
 
 def _write_pdf_card(pdf: _LexdeckPDF, card: Card) -> None:
-    prompt_height = _measure_pdf_text(pdf, card.prompt, size=12, line_height=7)
     meaning_text = card.meaning or "Not provided."
-    meaning_height = _measure_pdf_text(pdf, meaning_text, size=10, line_height=6)
-    block_height = 21 + prompt_height + meaning_height
+    prompt_width = 70.0
+    meaning_width = pdf.epw - prompt_width - 6
+    line_height = 4.6
+    row_padding = 1.0
+    prompt_lines = _wrap_pdf_text(pdf, card.prompt, width=prompt_width, size=9, bold=True)
+    meaning_lines = _wrap_pdf_text(pdf, meaning_text, width=meaning_width, size=8.5)
+    total_lines = max(len(prompt_lines), len(meaning_lines))
+    start = 0
 
-    available_page_height = pdf.h - pdf.t_margin - pdf.b_margin - 18
-    needs_new_page = pdf.get_y() + block_height > pdf.page_break_trigger
-    block_fits_page = block_height <= available_page_height
-    if block_fits_page and needs_new_page:
-        pdf.add_page()
+    while start < total_lines:
+        y = pdf.get_y()
+        available_lines = floor((pdf.page_break_trigger - y - 2 * row_padding - 0.5) / line_height)
+        if available_lines < 1:
+            pdf.add_page()
+            continue
 
-    x = pdf.l_margin
-    y = pdf.get_y()
-    width = pdf.epw
-    if block_fits_page:
-        pdf.set_fill_color(248, 250, 252)
-        pdf.rect(x, y, width, block_height, style="F")
-        pdf.set_fill_color(37, 99, 235)
-        pdf.rect(x, y, 1.5, block_height, style="F")
+        end = min(start + available_lines, total_lines)
+        for index in range(start, end):
+            line_y = y + row_padding + (index - start) * line_height
+            if index < len(prompt_lines):
+                pdf.set_xy(pdf.l_margin, line_y)
+                pdf.set_font("Lexdeck", "B", 9)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(
+                    prompt_width,
+                    line_height,
+                    prompt_lines[index],
+                    align=_text_alignment(card.prompt),
+                )
+            if index < len(meaning_lines):
+                pdf.set_xy(pdf.l_margin + prompt_width + 6, line_y)
+                pdf.set_font("Lexdeck", "", 8.5)
+                pdf.set_text_color(*(71, 85, 105) if card.meaning else (148, 163, 184))
+                pdf.cell(
+                    meaning_width,
+                    line_height,
+                    meaning_lines[index],
+                    align=_text_alignment(meaning_text),
+                )
 
-    pdf.set_xy(x + 5, y + 7)
-    pdf.set_font("Lexdeck", "B", 12)
-    pdf.set_text_color(15, 23, 42)
-    pdf.multi_cell(
-        width - 10,
-        7,
-        card.prompt,
-        align=_text_alignment(card.prompt),
-        new_x=XPos.LMARGIN,
-        new_y=YPos.NEXT,
-    )
-    pdf.ln(6)
-    pdf.set_x(x + 5)
-    pdf.set_font("Lexdeck", "", 10)
-    if card.meaning:
-        pdf.set_text_color(71, 85, 105)
-    else:
-        pdf.set_text_color(148, 163, 184)
-    pdf.multi_cell(
-        width - 10,
-        6,
-        meaning_text,
-        align=_text_alignment(meaning_text),
-        new_x=XPos.LMARGIN,
-        new_y=YPos.NEXT,
-    )
-    if block_fits_page:
-        target_y = y + block_height + 8
-        if pdf.get_y() < target_y:
-            pdf.set_y(target_y)
+        row_bottom = y + 2 * row_padding + (end - start) * line_height
+        if end == total_lines:
+            pdf.set_draw_color(226, 232, 240)
+            pdf.line(pdf.l_margin, row_bottom, pdf.w - pdf.r_margin, row_bottom)
+            pdf.set_y(row_bottom + 0.3)
         else:
-            pdf.ln(4)
-    else:
-        pdf.ln(4)
+            pdf.add_page()
+        start = end
 
 
-def _measure_pdf_text(pdf: _LexdeckPDF, text: str, *, size: int, line_height: float) -> float:
-    pdf.set_font("Lexdeck", "", size)
-    height = pdf.multi_cell(
-        pdf.epw - 10,
-        line_height,
+def _wrap_pdf_text(
+    pdf: _LexdeckPDF, text: str, *, width: float, size: float, bold: bool = False
+) -> list[str]:
+    pdf.set_font("Lexdeck", "B" if bold else "", size)
+    lines = pdf.multi_cell(
+        width,
+        4.6,
         text,
         align=_text_alignment(text),
         dry_run=True,
-        output=MethodReturnValue.HEIGHT,
+        output=MethodReturnValue.LINES,
     )
-    return cast(float, height)
+    return cast(list[str], lines)
 
 
 def _find_pdf_fonts() -> tuple[Path, Path]:

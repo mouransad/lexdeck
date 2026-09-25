@@ -189,6 +189,50 @@ async def test_library_selection_mode_exports_selected_cards(tmp_path, monkeypat
 
 
 @pytest.mark.asyncio
+async def test_library_range_selection_shows_markers_and_preserves_search_typing(tmp_path) -> None:
+    service = LexdeckService(tmp_path / "lexdeck.db")
+    for prompt in ("alpha", "bravo", "charlie", "delta", "echo"):
+        service.add_card(prompt, f"meaning of {prompt}")
+    app = LexdeckApp(service, initial_screen="library")
+
+    async with app.run_test(size=(72, 24)) as pilot:
+        await pilot.pause()
+        library = app.screen
+        assert isinstance(library, LibraryScreen)
+        table = library.query_one("#card-table", DataTable)
+        visible = list(library.cards.values())
+
+        await pilot.press("v")
+        assert all(table.get_cell(card.id, "selected").plain == "[ ]" for card in visible)
+        await pilot.press("j", "j", "shift+l")
+        assert set(library.selected_cards) == {card.id for card in visible[:3]}
+        assert [table.get_cell(card.id, "selected").plain for card in visible] == [
+            "[x]",
+            "[x]",
+            "[x]",
+            "[ ]",
+            "[ ]",
+        ]
+        assert "☑ SELECTED" in str(library.query_one("#card-detail", Static).render())
+
+        await pilot.press("c", "j", "l", "k", "k", "shift+enter")
+        assert set(library.selected_cards) == {card.id for card in visible[1:4]}
+        assert [table.get_cell(card.id, "selected").plain for card in visible] == [
+            "[ ]",
+            "[x]",
+            "[x]",
+            "[x]",
+            "[ ]",
+        ]
+
+        await pilot.press("c", "/")
+        assert library.query_one("#search", Input).has_focus
+        await pilot.press("L", "shift+enter")
+        assert library.query_one("#search", Input).value == "L"
+        assert library.selected_cards == {}
+
+
+@pytest.mark.asyncio
 async def test_selection_mode_preserves_typing_and_escape_is_safe(tmp_path) -> None:
     service = LexdeckService(tmp_path / "lexdeck.db")
     service.add_card("alpha", "first")

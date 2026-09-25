@@ -14,8 +14,9 @@ or any other language.
 - Press `y` when you remember a card. Press `n` to reveal its meaning, then continue
   when you are ready.
 - Search, edit, and archive cards without deleting their recall history.
-- Select cards in the library and export them as PDF, Excel, or UTF-8 text. PDF
-  export includes the Unicode fonts it needs.
+- Select cards individually or by range in the library, then export them as PDF,
+  Excel, or UTF-8 text. PDF export uses a compact two-column layout and includes
+  the Unicode fonts it needs.
 
 Lexdeck is available as a standalone download for Linux, macOS, and Windows. The
 standalone app includes Python and its dependencies; users do not need to install
@@ -34,7 +35,7 @@ download the archive matching your system:
 | macOS Intel | `lexdeck-vVERSION-macos-x86_64.tar.gz` |
 | macOS Apple Silicon | `lexdeck-vVERSION-macos-arm64.tar.gz` |
 
-`VERSION` is the release tag, such as `0.1.1` in `lexdeck-v0.1.1-linux-x86_64.tar.gz`.
+`VERSION` is the release tag, such as `0.1.2` in `lexdeck-v0.1.2-linux-x86_64.tar.gz`.
 Each archive contains the `lexdeck` executable (or `lexdeck.exe`), the MIT license,
 and third-party notices and license texts. Download `SHA256SUMS.txt` from the same release if you
 want to verify the archive before opening it. On Linux or macOS, run

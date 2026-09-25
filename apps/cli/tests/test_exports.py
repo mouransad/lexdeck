@@ -116,7 +116,7 @@ def test_excel_export_gives_long_cards_room_to_wrap(tmp_path) -> None:
     assert float(row_match.group(1)) > 96
 
 
-def test_pdf_export_has_multiple_structured_pages_when_needed(
+def test_pdf_export_packs_short_cards_on_one_page(
     tmp_path, export_cards_fixture: list[Card]
 ) -> None:
     cards = export_cards_fixture * 12
@@ -131,7 +131,13 @@ def test_pdf_export_has_multiple_structured_pages_when_needed(
     assert output.suffix == ".pdf"
     assert pdf_bytes.startswith(b"%PDF-")
     assert len(pdf_bytes) > 10_000
-    assert pdf_bytes.count(b"/Type /Page") >= 2
+    assert len(re.findall(rb"/Type /Page\b", pdf_bytes)) == 1
+
+
+def test_pdf_export_paginates_a_large_selection(tmp_path, export_cards_fixture: list[Card]) -> None:
+    output = export_cards(export_cards_fixture * 40, tmp_path / "many-cards", ExportFormat.PDF)
+
+    assert len(re.findall(rb"/Type /Page\b", output.read_bytes())) > 1
 
 
 def test_pdf_fonts_are_bundled_for_all_platforms() -> None:

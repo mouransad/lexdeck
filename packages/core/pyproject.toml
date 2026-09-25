@@ -1,6 +1,6 @@
 [project]
 name = "lexdeck-core"
-version = "0.1.1"
+version = "0.1.2"
 description = "Framework-independent domain and persistence layer for Lexdeck"
 requires-python = ">=3.11"
 license = "MIT"

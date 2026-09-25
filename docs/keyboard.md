@@ -82,20 +82,21 @@ vertically. Unavailable Edit and Archive controls are disabled.
 
 ### Library selection mode
 
-Selection mode shows a checkbox marker on every visible row and keeps navigation
-separate from selection. Search remains available, and selections remain selected
-when a query hides them. “Select all” applies only to the currently visible search
-results.
+Selection mode shows a `[ ]` marker for unselected rows and `[x]` for selected rows.
+Navigation does not change selection. Search remains available, and selections stay
+selected when a query hides them. “Select all” applies only to the currently visible
+search results.
 
 | Key | Action |
 | --- | --- |
 | `j` / `Down` | Highlight the next card without changing selection. |
 | `k` / `Up` | Highlight the previous card without changing selection. |
 | `l` / `Enter` / `Space` | Toggle the highlighted card. Clicking a row does the same. |
+| `Shift+L` / `Shift+Enter` | Select the inclusive range from the anchor to the highlighted card. The anchor starts at the row highlighted when you enter selection mode and moves when you toggle a card. If search hides the anchor, the highlighted row becomes the new anchor. |
 | `Ctrl+A` | Select every visible card. |
 | `c` | Clear the complete selection, including cards hidden by search. |
 | `Ctrl+E` | Open the export dialog. Disabled until at least one card is selected. |
-| `p` | Confirm, then print the selected cards using the polished PDF layout and default printer. |
+| `p` | Confirm, then print the selected cards using the compact PDF layout and default printer. |
 | `dd` / `Delete` | Confirm, then archive the complete selection in one transaction. |
 | `Esc` | Return from search to the table; from the table, leave selection mode and clear it. |
 

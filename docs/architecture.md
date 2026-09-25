@@ -141,12 +141,14 @@ The command palette exposes application navigation for users who remember a
 command name but not its key. `?` opens an in-app reference that must remain
 synchronized with [keyboard.md](keyboard.md).
 
-Library multi-selection is an explicit mode. Entering the mode reveals checkbox
-markers and a selected count; movement does not silently change selection. `l`,
-`Enter`, `Space`, or a row click toggles only the current card. Select-all is scoped
-to visible search results, while selected cards remain stable when a search hides
-them. Export, Print, and Archive are unavailable for an empty selection, and leaving
-the mode clears the selection so hidden state cannot leak into normal editing.
+Library multi-selection is an explicit mode. Entering the mode reveals literal
+checkbox markers and a selected count; movement does not silently change selection.
+`l`, `Enter`, `Space`, or a row click toggles only the current card and moves the range
+anchor there. `Shift+L` or `Shift+Enter` selects the inclusive visible range from the
+anchor to the highlighted card. Select-all is scoped to visible search results,
+while selected cards remain stable when a search hides them. Export, Print, and
+Archive are unavailable for an empty selection, and leaving the mode clears the
+selection so hidden state cannot leak into normal editing.
 
 Bulk archive is a core workflow. The service resolves and deduplicates the requested
 active cards before the repository archives them in one SQLite transaction. A stale
@@ -159,8 +161,8 @@ written to a temporary sibling and atomically moved into place. Existing files n
 an explicit replacement confirmation.
 
 - PDF uses an embedded Unicode TrueType font, text shaping, direction-aware text,
-  label-free card blocks, comfortable spacing, and page numbers. Its only
-  document-level content is the card count.
+  compact Content/Meaning rows, light dividers, and page numbers. Long rows
+  continue across pages; the card count appears above the first row.
 - Excel uses one focused worksheet with only Content and Meaning, a filterable table,
   direction-aware wrapped cells, adaptive row heights, frozen headings, and print setup.
 - Plain text is UTF-8 with numbered CONTENT and MEANING sections.

@@ -47,7 +47,7 @@ Keep these three versions synchronized: `apps/cli/pyproject.toml`,
 `packages/core/pyproject.toml`, and `apps/cli/src/lexdeck_cli/__init__.py`.
 Update `uv.lock` with `uv lock` after changing package versions. The release
 script rejects a tag that differs from the package version, such as `v0.2.0`
-for version `0.1.1`.
+for version `0.1.2`.
 
 Write `docs/releases/vVERSION.md` with concise, user-facing release notes.
 The publish job uses this file for the release description.
@@ -56,7 +56,7 @@ Before tagging:
 
 ```sh
 make check
-uv run --group release python scripts/build_release.py --tag v0.1.1
+uv run --group release python scripts/build_release.py --tag v0.1.2
 ```
 
 The local build smoke-tests a standalone executable using a disposable database
@@ -69,8 +69,8 @@ Commit the version change, push `main`, wait for CI, then create and push the
 matching tag:
 
 ```sh
-git tag -a v0.1.1 -m "Lexdeck v0.1.1"
-git push origin v0.1.1
+git tag -a v0.1.2 -m "Lexdeck v0.1.2"
+git push origin v0.1.2
 ```
 
 The tag starts the release workflow. It validates versions, runs `make check`,
